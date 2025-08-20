@@ -23,7 +23,16 @@ export default function LoginScreen() {
             marginTop: 15
         }}>Create AI Image Editing in just on Click</Text>
 
-        <View></View>
+        <View style={styles.button}>
+            <Text style={{textAlign:'center', color:'white', fontSize:17}}>Continue</Text>
+        </View>
+
+        <Text style={{
+            textAlign: 'center',
+            marginTop: 20,
+            color: Colors.GRAY,
+            fontSize:13
+        }}>By Continuing you agree to ours tearm and conditions</Text>
       </View>
     </View>
   )
@@ -38,5 +47,12 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
 
+    },
+    button:{
+        width: '100%',
+        padding: 20,
+        backgroundColor:Colors.PRIMARY,
+        borderRadius: 40,
+        marginTop: 20
     }
 })

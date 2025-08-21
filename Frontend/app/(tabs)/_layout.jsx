@@ -1,11 +1,43 @@
-import { Tabs } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import Colors from '../../constants/Colors';
-import { View } from 'react-native';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { Tabs } from "expo-router";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Colors from "../../constants/Colors";
+import { View } from "react-native";
+import { useUser } from "@clerk/clerk-expo";
+import { useContext, useEffect, useCallback } from "react";
+import { UserDetailContext } from "./../../context/UserDetailContext";
 
 export default function TabLayout() {
+  const { user } = useUser();
+  const userContext = useContext(UserDetailContext);
+
+  const VerifyUser = useCallback(async () => {
+    try {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      if (!email) return;
+
+      // ✅ Since backend is removed, use mock user data
+      const mockUser = {
+        id: "offline-123",
+        userName: user?.fullName || "Guest User",
+        UserEmail: email,
+      };
+
+      userContext?.setUserDetail?.(mockUser);
+      console.log("Mock user set:", mockUser);
+
+    } catch (e) {
+      console.log("Error setting mock user:", e);
+    }
+  }, [user, userContext]);
+
+  useEffect(() => {
+    if (user && userContext) {
+      VerifyUser();
+    }
+  }, [user, VerifyUser]);
+
   return (
     <Tabs
       screenOptions={{
@@ -14,40 +46,43 @@ export default function TabLayout() {
         tabBarShowLabel: true,
       }}
     >
+      {/* Home */}
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
+          title: "Home",
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="home" size={22} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="collection"
-        options={{
-          title: 'Collection',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome name="folder-open" size={22} color={color} />
+            <FontAwesome5 name="home" size={22} color={color} />
           ),
         }}
       />
 
-      {/* Big Center Button */}
+      {/* Projects */}
+      <Tabs.Screen
+        name="projects"
+        options={{
+          title: "Projects",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome5 name="images" size={22} color={color} />
+          ),
+        }}
+      />
+
+      {/* Big Center Edit Button */}
       <Tabs.Screen
         name="photoedit"
         options={{
-          title: '',
-          tabBarIcon: ({ color }) => (
+          title: "",
+          tabBarIcon: () => (
             <View
               style={{
                 width: 60,
                 height: 60,
                 borderRadius: 30,
                 backgroundColor: Colors.PRIMARY,
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginBottom: 20, // lift above bar
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: 20, // lifts above bar
               }}
             >
               <AntDesign name="plus" size={28} color="white" />
@@ -56,19 +91,22 @@ export default function TabLayout() {
         }}
       />
 
+      {/* Collection */}
       <Tabs.Screen
-        name="projects"
+        name="collection"
         options={{
-          title: 'Projects',
+          title: "Collection",
           tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="images" size={22} color={color} />
+            <FontAwesome5 name="folder-open" size={22} color={color} />
           ),
         }}
       />
+
+      {/* Profile */}
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ color }) => (
             <FontAwesome5 name="user-circle" size={22} color={color} />
           ),
@@ -77,3 +115,4 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+ 

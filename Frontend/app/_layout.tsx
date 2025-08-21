@@ -1,7 +1,8 @@
 import { Stack } from "expo-router";
 import { ClerkLoaded, ClerkProvider } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
-// import { tokenCache } from '@clerk/clerk-expo/token-cache'
+import { UserDetailContext } from "./../context/UserDetailContext";
+import { useState } from "react";
 
 // Secure token cache for Clerk
 const tokenCache = {
@@ -21,14 +22,6 @@ const tokenCache = {
     }
   },
 
-  async setToken(key: string, value: string) {
-    try {
-      await SecureStore.setItemAsync(key, value);
-    } catch (error) {
-      console.error("SecureStore setToken error:", error);
-    }
-  },
-
   async saveToken(key: string, token: string) {
     try {
       await SecureStore.setItemAsync(key, token);
@@ -39,6 +32,7 @@ const tokenCache = {
 };
 
 export default function RootLayout() {
+  const [userDetail, setUserDetail] = useState(null);
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
@@ -50,14 +44,12 @@ export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
-        <Stack screenOptions={{
-          headerShown: false
-        }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="login/index"
-          />
-        </Stack>
+        <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="login/index" />
+          </Stack>
+        </UserDetailContext.Provider>
       </ClerkLoaded>
     </ClerkProvider>
   );

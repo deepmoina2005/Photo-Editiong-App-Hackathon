@@ -48,7 +48,6 @@ export const generateImage = async (req, res) => {
   }
 };
 
-// ✅ 2. Remove Background
 export const removeImageBackground = async (req, res) => {
   try {
     const image = req.file;
@@ -75,7 +74,6 @@ export const removeImageBackground = async (req, res) => {
   }
 };
 
-// ✅ 3. Remove Object
 export const removeImageObject = async (req, res) => {
   try {
     const { object } = req.body;
@@ -107,5 +105,59 @@ export const removeImageObject = async (req, res) => {
   } catch (error) {
     console.error("Object removal error:", error);
     res.status(500).json({ success: false, message: "Object removal failed." });
+  }
+};
+
+export const upscaleImage = async (req, res) => {
+  try {
+    const image = req.file; // multer file
+    const { target_width, target_height } = req.body;
+
+    if (!image) {
+      return res.status(400).json({ success: false, message: "No image uploaded" });
+    }
+
+    if (!target_width || !target_height) {
+      return res.status(400).json({ success: false, message: "Target width and height are required" });
+    }
+
+    // Prepare FormData for Clipdrop
+    const formData = new FormData();
+    formData.append("image_file", image.path); // file path
+    formData.append("target_width", target_width);
+    formData.append("target_height", target_height);
+
+    // Call Clipdrop upscale API
+    const { data } = await axios.post(
+      "https://clipdrop-api.co/image-upscaling/v1/upscale",
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          "x-api-key": process.env.CLIPDROP_API_KEY,
+        },
+        responseType: "arraybuffer", // receive binary
+      }
+    );
+
+    // Convert response to Base64
+    const base64Image = `data:image/png;base64,${Buffer.from(data, "binary").toString("base64")}`;
+
+    // Upload to Cloudinary
+    const { secure_url } = await cloudinary.uploader.upload(base64Image);
+
+    // Save in MongoDB
+    const creation = new Creation({
+      prompt: `Upscaled image to ${target_width}x${target_height}`,
+      content: secure_url,
+      type: "image",
+      publish: false,
+    });
+    await creation.save();
+
+    res.json({ success: true, content: secure_url });
+  } catch (error) {
+    console.error("Image upscaling error:", error.message || error);
+    res.status(500).json({ success: false, message: "Image upscaling failed." });
   }
 };

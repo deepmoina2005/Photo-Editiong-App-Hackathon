@@ -2,7 +2,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native'
 import Colors from '../../constants/Colors';
 import * as WebBrowser from 'expo-web-browser'
 import * as AuthSession from 'expo-auth-session'
-import React, { useCallback, useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useSSO } from '@clerk/clerk-expo'
 
 export default function LoginScreen() {

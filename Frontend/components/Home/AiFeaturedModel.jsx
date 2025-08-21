@@ -1,6 +1,5 @@
 import { View, Text, FlatList } from "react-native";
 import { useEffect, useState } from "react";
-// ✅ Lucide Icons import
 import { Image as ImageIcon, Wand2, Scissors, Sparkles } from "lucide-react-native";
 
 export default function AiFeaturedModel() {
@@ -12,7 +11,6 @@ export default function AiFeaturedModel() {
 
   const GetAiModelFeaturedList = async () => {
     try {
-      // ✅ Lucide icon components instead of image URLs
       const mockData = [
         {
           id: "1",

@@ -1,14 +1,10 @@
 import { View, Text, Image } from "react-native";
-import { useContext } from "react";
 import Colors from "../../constants/Colors";
 import { useUser } from "@clerk/clerk-expo";
-import { UserDetailContext } from "../../context/UserDetailContext";
 
 export default function Header() {
   const { user } = useUser();
-  const { userDetail } = useContext(UserDetailContext);
 
-  const displayCredits = userDetail?.Credits ?? 0;
   const profileImage = user?.imageUrl || "../../assets/images/react-logo.png";
 
   return (
@@ -56,7 +52,6 @@ export default function Header() {
               height: 25,
             }}
           />
-          <Text>{displayCredits}</Text>
         </View>
 
         {/* Profile Image */}

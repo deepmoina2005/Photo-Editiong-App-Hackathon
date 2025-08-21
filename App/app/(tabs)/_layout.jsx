@@ -1,43 +1,10 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { Tabs } from "expo-router";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Colors from "../../constants/Colors";
 import { View } from "react-native";
-import { useUser } from "@clerk/clerk-expo";
-import { useContext, useEffect, useCallback } from "react";
-import { UserDetailContext } from "./../../context/UserDetailContext";
 
 export default function TabLayout() {
-  const { user } = useUser();
-  const userContext = useContext(UserDetailContext);
-
-  const VerifyUser = useCallback(async () => {
-    try {
-      const email = user?.primaryEmailAddress?.emailAddress;
-      if (!email) return;
-
-      // ✅ Since backend is removed, use mock user data
-      const mockUser = {
-        id: "offline-123",
-        userName: user?.fullName || "Guest User",
-        UserEmail: email,
-      };
-
-      userContext?.setUserDetail?.(mockUser);
-      console.log("Mock user set:", mockUser);
-
-    } catch (e) {
-      console.log("Error setting mock user:", e);
-    }
-  }, [user, userContext]);
-
-  useEffect(() => {
-    if (user && userContext) {
-      VerifyUser();
-    }
-  }, [user, VerifyUser]);
-
   return (
     <Tabs
       screenOptions={{
@@ -115,4 +82,3 @@ export default function TabLayout() {
     </Tabs>
   );
 }
- 

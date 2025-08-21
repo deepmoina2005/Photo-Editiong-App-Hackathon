@@ -1,20 +1,21 @@
-import { View } from 'react-native'
-import Header from '../../components/Home/Header'
-import Banner from '../../components/Home/Banner'
-import AiFeaturedModel from '../../components/Home/AiFeaturedModel'
+import { SafeAreaView, ScrollView } from "react-native";
+import Header from "../../components/Home/Header";
+import Banner from "../../components/Home/Banner";
+import AiFeaturedModel from "../../components/Home/AiFeaturedModel";
 
 export default function HomeTab() {
   return (
-    <View style={{
-        padding: 20,
-        marginTop: 20
-    }}>
-      {/* header */}
-        <Header/>
-      {/* Baner */}
-      <Banner/>
-      {/* Featured List */}
-      <AiFeaturedModel/>
-    </View>
-  )
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
+        {/* Header */}
+        <Header />
+
+        {/* Banner */}
+        <Banner />
+
+        {/* Featured List */}
+        <AiFeaturedModel />
+      </ScrollView>
+    </SafeAreaView>
+  );
 }

@@ -1,29 +1,28 @@
-import express from 'express';
-import { auth } from '../middlewares/auth.js';
+import express from "express";
 import {
-  generateArticle,
-  generateBlogTitle,
   generateImage,
   removeImageBackground,
   removeImageObject,
-  resumeReview
-} from '../controllers/aiController.js';
-import { upload } from '../configs/multer.js';
+} from "../controllers/aiController.js";
+import { upload } from "../configs/multer.js";
 
 const aiRouter = express.Router();
 
-// Text-based AI generation
-aiRouter.post('/generate-article', auth, generateArticle);
-aiRouter.post('/generate-blog-title', auth, generateBlogTitle);
+// ✅ Image generation (text-to-image)
+aiRouter.post("/generate-image", generateImage);
 
-// Image generation (prompt-based)
-aiRouter.post('/generate-image', auth, generateImage);
+// ✅ Image background removal (with file upload)
+aiRouter.post(
+  "/remove-image-background",
+  upload.single("image"),
+  removeImageBackground
+);
 
-// Image manipulation (file upload)
-aiRouter.post('/remove-image-background', auth, upload.single('image'), removeImageBackground);
-aiRouter.post('/remove-image-object', auth, upload.single('image'), removeImageObject);
-
-// Resume review (file upload)
-aiRouter.post('/resume-review', auth, upload.single('resume'), resumeReview);
+// ✅ Image object removal (with file upload)
+aiRouter.post(
+  "/remove-image-object",
+  upload.single("image"),
+  removeImageObject
+);
 
 export default aiRouter;

@@ -11,16 +11,16 @@ import {
   Pressable,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as Clipboard from "expo-clipboard";
 import axios from "axios";
 import { Sparkles, Image as ImageIcon, Copy } from "lucide-react-native";
+import * as Clipboard from "expo-clipboard";
 
 const API_KEY = "wx08frrxe86v2lo7k";
 const BASE_URL = "https://techhk.aoscdn.com/";
 
-export default function OCRModal({ visible, onClose }) {
+export default function ColorizeModal({ visible, onClose }) {
   const [image, setImage] = useState(null);
-  const [ocrText, setOCRText] = useState("");
+  const [colorizedImage, setColorizedImage] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
@@ -38,11 +38,11 @@ export default function OCRModal({ visible, onClose }) {
 
     if (!result.canceled && result.assets?.length > 0) {
       setImage(result.assets[0].uri);
-      setOCRText("");
+      setColorizedImage(null);
     }
   };
 
-  const performOCR = async () => {
+  const colorizeImage = async () => {
     if (!image) return Alert.alert("No image", "Please select an image first.");
 
     try {
@@ -51,67 +51,62 @@ export default function OCRModal({ visible, onClose }) {
       const fileType = uriParts[uriParts.length - 1];
 
       const formData = new FormData();
+      formData.append("sync", "0"); // async mode
+      formData.append("return_type", 1); // 1 = return URL
       formData.append("image_file", {
         uri: image,
         name: `photo.${fileType}`,
         type: `image/${fileType}`,
       });
-      formData.append("format", "txt");
 
-      const { data } = await axios.post(`${BASE_URL}/api/tasks/document/ocr`, formData, {
+      // Step 1: create colorization task
+      const { data } = await axios.post(`${BASE_URL}api/tasks/visual/colorization`, formData, {
         headers: { "Content-Type": "multipart/form-data", "X-API-KEY": API_KEY },
       });
 
       const taskId = data?.data?.task_id;
-      if (!taskId) throw new Error("Failed to create OCR task");
+      if (!taskId) throw new Error("Failed to create colorization task");
 
-      const result = await pollOCRResult(taskId);
+      // Step 2: poll result
+      const result = await pollColorizationResult(taskId);
+      if (!result?.image) throw new Error("Colorized image not returned");
 
-      if (result?.file) {
-        const txtResponse = await axios.get(result.file);
-        setOCRText(txtResponse.data);
-      } else {
-        setOCRText("No text extracted");
-      }
+      setColorizedImage(result.image);
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "Failed to extract text from image.");
+      Alert.alert("Error", "Failed to colorize image.");
     } finally {
       setLoading(false);
     }
   };
 
-  const pollOCRResult = async (taskId, retries = 0) => {
-    const MAX_RETRIES = 60;
-    const { data } = await axios.get(`${BASE_URL}/api/tasks/document/ocr/${taskId}`, {
+  const pollColorizationResult = async (taskId, retries = 0) => {
+    const MAX_RETRIES = 30;
+    const { data } = await axios.get(`${BASE_URL}api/tasks/visual/colorization/${taskId}`, {
       headers: { "X-API-KEY": API_KEY },
     });
 
     if (data?.data?.state !== 1) {
-      if (retries >= MAX_RETRIES) throw new Error("OCR processing timeout");
+      if (retries >= MAX_RETRIES) throw new Error("Colorization processing timeout");
       await new Promise((res) => setTimeout(res, 1000));
-      return pollOCRResult(taskId, retries + 1);
+      return pollColorizationResult(taskId, retries + 1);
     }
 
     return data.data;
   };
 
-  const copyText = async () => {
-    try {
-      await Clipboard.setStringAsync(ocrText);
-      Alert.alert("Copied", "OCR text copied to clipboard");
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Error", "Failed to copy text");
-    }
+  const copyURL = async () => {
+    if (!colorizedImage) return;
+    await Clipboard.setStringAsync(colorizedImage);
+    Alert.alert("Copied", "Colorized image URL copied to clipboard");
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
         <View style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
-          <Sparkles size={26} color="#00AD25" />
-          <Text style={{ fontSize: 22, fontWeight: "bold", marginLeft: 10 }}>OCR Scanner</Text>
+          <Sparkles size={26} color="#FF4500" />
+          <Text style={{ fontSize: 22, fontWeight: "bold", marginLeft: 10 }}>Photo Colorizer</Text>
           <Pressable onPress={onClose} style={{ marginLeft: "auto", padding: 8 }}>
             <Text style={{ fontSize: 18, fontWeight: "bold", color: "#FF3B30" }}>✕</Text>
           </Pressable>
@@ -139,20 +134,13 @@ export default function OCRModal({ visible, onClose }) {
           {image && (
             <Image
               source={{ uri: image }}
-              style={{
-                width: "100%",
-                height: 220,
-                borderRadius: 12,
-                marginBottom: 20,
-                borderWidth: 1,
-                borderColor: "#E5E7EB",
-              }}
+              style={{ width: "100%", height: 220, borderRadius: 12, marginBottom: 20 }}
               resizeMode="cover"
             />
           )}
 
           <TouchableOpacity
-            onPress={performOCR}
+            onPress={colorizeImage}
             disabled={loading || !image}
             style={{
               flexDirection: "row",
@@ -171,32 +159,44 @@ export default function OCRModal({ visible, onClose }) {
               <>
                 <Sparkles size={20} color="white" />
                 <Text style={{ color: "white", fontWeight: "600", fontSize: 16, marginLeft: 8 }}>
-                  Extract Text
+                  Colorize Image
                 </Text>
               </>
             )}
           </TouchableOpacity>
 
-          {ocrText ? (
-            <View style={{ padding: 10, backgroundColor: "#F3F4F6", borderRadius: 12 }}>
-              <Text style={{ marginBottom: 10 }}>{ocrText}</Text>
+          {colorizedImage && (
+            <>
+              <Image
+                source={{ uri: colorizedImage }}
+                style={{ width: "100%", height: 220, borderRadius: 12, marginBottom: 15 }}
+                resizeMode="cover"
+              />
+
               <TouchableOpacity
-                onPress={copyText}
+                onPress={copyURL}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "center",
                   backgroundColor: "#F59E0B",
-                  padding: 10,
-                  borderRadius: 8,
+                  padding: 15,
+                  borderRadius: 12,
+                  marginBottom: 20,
                 }}
               >
-                <Copy size={18} color="white" />
-                <Text style={{ color: "white", fontWeight: "600", marginLeft: 6 }}>Copy Text</Text>
+                <Copy size={20} color="white" />
+                <Text style={{ color: "white", fontWeight: "600", fontSize: 16, marginLeft: 8 }}>
+                  Copy Image URL
+                </Text>
               </TouchableOpacity>
-            </View>
-          ) : (
-            !loading && <Text style={{ textAlign: "center", color: "#888", marginTop: 20 }}>No OCR text yet</Text>
+            </>
+          )}
+
+          {!image && !colorizedImage && (
+            <Text style={{ color: "#888", textAlign: "center", marginVertical: 20 }}>
+              No image selected yet. Pick an image to start!
+            </Text>
           )}
         </ScrollView>
       </View>

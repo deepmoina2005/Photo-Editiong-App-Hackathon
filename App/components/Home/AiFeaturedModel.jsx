@@ -5,6 +5,7 @@ import {
   Wand2,
   Sparkles,
   Scissors,
+  Copy,
 } from "lucide-react-native";
 
 import ImageGenerateModal from "../AiFeatured/generateImage";
@@ -12,15 +13,19 @@ import RemoveBackgroundMobile from "../AiFeatured/bgRemovedImage";
 import RemoveObjectModal from "../AiFeatured/objectRemovedImage";
 import EnhancedImage from "../AiFeatured/enhancedImage";
 import OCRModal from "../AiFeatured/ocrImage";
+import ColorizeModal from "../AiFeatured/imageColorizeModal"; // Added import
 
 export default function AiFeaturedModel() {
   const [aiModelList, setAiModelList] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
+
+  // Modals state
   const [generateModalVisible, setGenerateModalVisible] = useState(false);
   const [bgModalVisible, setBgModalVisible] = useState(false);
   const [objectModalVisible, setObjectModalVisible] = useState(false);
   const [enhanceModalVisible, setEnhanceModalVisible] = useState(false);
   const [ocrModalVisible, setOCRModalVisible] = useState(false);
+  const [colorizeModalVisible, setColorizeModalVisible] = useState(false); // Added state
   const [genericModalVisible, setGenericModalVisible] = useState(false);
 
   useEffect(() => {
@@ -54,11 +59,18 @@ export default function AiFeaturedModel() {
         icon: <Sparkles size={26} color="#FFD700" />,
       },
       {
-        id: "7",
+        id: "5",
         name: "OCR Scanner",
         description: "Extract text from images using AI OCR.",
         screen: "OCRModal",
         icon: <Sparkles size={26} color="#00AD25" />,
+      },
+      {
+        id: "6",
+        name: "Photo Colorizer",
+        description: "Colorize black & white photos using AI.",
+        screen: "ColorizeModal",
+        icon: <Copy size={26} color="#FF69B4" />, // pink icon for colorize
       },
     ];
     setAiModelList(mockData);
@@ -82,6 +94,9 @@ export default function AiFeaturedModel() {
       case "OCRModal":
         setOCRModalVisible(true);
         break;
+      case "ColorizeModal": // Added case
+        setColorizeModalVisible(true);
+        break;
       default:
         setGenericModalVisible(true);
     }
@@ -100,7 +115,10 @@ export default function AiFeaturedModel() {
         columnWrapperStyle={{ justifyContent: "space-between", marginBottom: 20 }}
         contentContainerStyle={{ paddingBottom: 20 }}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleItemPress(item)} style={{ flex: 1, alignItems: "center" }}>
+          <TouchableOpacity
+            onPress={() => handleItemPress(item)}
+            style={{ flex: 1, alignItems: "center" }}
+          >
             <View
               style={{
                 width: 65,
@@ -114,7 +132,14 @@ export default function AiFeaturedModel() {
             >
               {item.icon}
             </View>
-            <Text style={{ marginTop: 8, fontSize: 13, fontWeight: "600", textAlign: "center" }}>
+            <Text
+              style={{
+                marginTop: 8,
+                fontSize: 13,
+                fontWeight: "600",
+                textAlign: "center",
+              }}
+            >
               {item?.name || "Unnamed"}
             </Text>
           </TouchableOpacity>
@@ -138,7 +163,13 @@ export default function AiFeaturedModel() {
           </Text>
           <Pressable
             onPress={() => setGenericModalVisible(false)}
-            style={{ marginTop: 30, backgroundColor: "#4A90E2", paddingVertical: 15, borderRadius: 12, alignItems: "center" }}
+            style={{
+              marginTop: 30,
+              backgroundColor: "#4A90E2",
+              paddingVertical: 15,
+              borderRadius: 12,
+              alignItems: "center",
+            }}
           >
             <Text style={{ color: "white", fontWeight: "600", fontSize: 18 }}>Close</Text>
           </Pressable>
@@ -150,7 +181,8 @@ export default function AiFeaturedModel() {
       <RemoveBackgroundMobile visible={bgModalVisible} onClose={() => setBgModalVisible(false)} />
       <RemoveObjectModal visible={objectModalVisible} onClose={() => setObjectModalVisible(false)} />
       <EnhancedImage visible={enhanceModalVisible} onClose={() => setEnhanceModalVisible(false)} />
-      <OCRModal visible={ocrModalVisible} onClose={() => setOCRModalVisible(false)} /> {/* Added OCR */}
+      <OCRModal visible={ocrModalVisible} onClose={() => setOCRModalVisible(false)} />
+      <ColorizeModal visible={colorizeModalVisible} onClose={() => setColorizeModalVisible(false)} /> {/* Added Colorize */}
     </View>
   );
 }

@@ -4,8 +4,6 @@ import {
   Image as ImageIcon,
   Wand2,
   Sparkles,
-  Paintbrush,
-  Contrast,
   Scissors,
 } from "lucide-react-native";
 
@@ -13,6 +11,7 @@ import ImageGenerateModal from "../AiFeatured/generateImage";
 import RemoveBackgroundMobile from "../AiFeatured/bgRemovedImage";
 import RemoveObjectModal from "../AiFeatured/objectRemovedImage";
 import EnhancedImage from "../AiFeatured/enhancedImage";
+import OCRModal from "../AiFeatured/ocrImage";
 
 export default function AiFeaturedModel() {
   const [aiModelList, setAiModelList] = useState([]);
@@ -21,6 +20,7 @@ export default function AiFeaturedModel() {
   const [bgModalVisible, setBgModalVisible] = useState(false);
   const [objectModalVisible, setObjectModalVisible] = useState(false);
   const [enhanceModalVisible, setEnhanceModalVisible] = useState(false);
+  const [ocrModalVisible, setOCRModalVisible] = useState(false);
   const [genericModalVisible, setGenericModalVisible] = useState(false);
 
   useEffect(() => {
@@ -54,18 +54,11 @@ export default function AiFeaturedModel() {
         icon: <Sparkles size={26} color="#FFD700" />,
       },
       {
-        id: "5",
-        name: "Art Style",
-        description: "Transform photos into artistic styles.",
-        screen: "ArtStyle",
-        icon: <Paintbrush size={26} color="#8A2BE2" />,
-      },
-      {
-        id: "6",
-        name: "Color Fixer",
-        description: "Adjust brightness & contrast instantly.",
-        screen: "ColorFixer",
-        icon: <Contrast size={26} color="#FF1493" />,
+        id: "7",
+        name: "OCR Scanner",
+        description: "Extract text from images using AI OCR.",
+        screen: "OCRModal",
+        icon: <Sparkles size={26} color="#00AD25" />,
       },
     ];
     setAiModelList(mockData);
@@ -85,6 +78,9 @@ export default function AiFeaturedModel() {
         break;
       case "PhotoEnhancer":
         setEnhanceModalVisible(true);
+        break;
+      case "OCRModal":
+        setOCRModalVisible(true);
         break;
       default:
         setGenericModalVisible(true);
@@ -153,7 +149,8 @@ export default function AiFeaturedModel() {
       <ImageGenerateModal visible={generateModalVisible} onClose={() => setGenerateModalVisible(false)} />
       <RemoveBackgroundMobile visible={bgModalVisible} onClose={() => setBgModalVisible(false)} />
       <RemoveObjectModal visible={objectModalVisible} onClose={() => setObjectModalVisible(false)} />
-      <EnhancedImage visible={enhanceModalVisible} onClose={() => setEnhanceModalVisible(false)} /> {/* Added */}
+      <EnhancedImage visible={enhanceModalVisible} onClose={() => setEnhanceModalVisible(false)} />
+      <OCRModal visible={ocrModalVisible} onClose={() => setOCRModalVisible(false)} /> {/* Added OCR */}
     </View>
   );
 }

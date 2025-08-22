@@ -24,17 +24,6 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Projects */}
-      <Tabs.Screen
-        name="projects"
-        options={{
-          title: "Projects",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="images" size={22} color={color} />
-          ),
-        }}
-      />
-
       {/* Big Center Edit Button */}
       <Tabs.Screen
         name="photoedit"
@@ -65,17 +54,6 @@ export default function TabLayout() {
           title: "Collection",
           tabBarIcon: ({ color }) => (
             <FontAwesome5 name="folder-open" size={22} color={color} />
-          ),
-        }}
-      />
-
-      {/* Profile */}
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="user-circle" size={22} color={color} />
           ),
         }}
       />

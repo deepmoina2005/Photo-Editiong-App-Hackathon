@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "Frontend",
+    "owaner": "deep1278",
     "slug": "Frontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -34,7 +35,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

@@ -15,6 +15,7 @@ import {
 import axios from "axios";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import * as MediaLibrary from "expo-media-library";
 import { Image as ImageIcon, Sparkles } from "lucide-react-native";
 
 axios.defaults.baseURL = "https://photo-editiong-app-hackathon.vercel.app";
@@ -57,28 +58,39 @@ export default function ImageGenerateModal({ visible, onClose }) {
     }
   };
 
-  // Download the image to local filesystem
-  const downloadImage = async () => {
+  const saveImageToGallery = async () => {
     if (!resultImage) return;
     try {
+      // Ask for media library permission
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission denied", "Cannot save image without permission.");
+        return;
+      }
+
+      // Download the image temporarily
       const fileUri = FileSystem.documentDirectory + "generated_image.jpg";
-      const downloadResult = await FileSystem.downloadAsync(
-        resultImage,
-        fileUri
-      );
-      Alert.alert("Download Complete", "Image saved to: " + downloadResult.uri);
+      await FileSystem.downloadAsync(resultImage, fileUri);
+
+      // Save to gallery
+      const asset = await MediaLibrary.createAssetAsync(fileUri);
+      await MediaLibrary.createAlbumAsync("AI Images", asset, false);
+
+      Alert.alert("Download Complete", "Image saved to your gallery!");
     } catch (err) {
       console.error(err);
       Alert.alert("Download Failed", "Could not save the image.");
     }
   };
 
-  // Share the image
   const shareImage = async () => {
     if (!resultImage) return;
     try {
+      // Download image to temporary file
       const fileUri = FileSystem.documentDirectory + "generated_image.jpg";
       await FileSystem.downloadAsync(resultImage, fileUri);
+
+      // Share the image
       await Sharing.shareAsync(fileUri);
     } catch (err) {
       console.error(err);
@@ -90,30 +102,19 @@ export default function ImageGenerateModal({ visible, onClose }) {
     <Modal visible={visible} animationType="slide" transparent={false}>
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
         {/* Header */}
-        <View
-          style={{ flexDirection: "row", alignItems: "center", padding: 20 }}
-        >
+        <View style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
           <Sparkles size={26} color="#00AD25" />
           <Text style={{ fontSize: 22, fontWeight: "bold", marginLeft: 10 }}>
             AI Image Generator
           </Text>
-          <Pressable
-            onPress={onClose}
-            style={{ marginLeft: "auto", padding: 8 }}
-          >
-            <Text
-              style={{ fontSize: 18, fontWeight: "bold", color: "#FF3B30" }}
-            >
-              ✕
-            </Text>
+          <Pressable onPress={onClose} style={{ marginLeft: "auto", padding: 8 }}>
+            <Text style={{ fontSize: 18, fontWeight: "bold", color: "#FF3B30" }}>✕</Text>
           </Pressable>
         </View>
 
         <ScrollView style={{ flex: 1, padding: 20 }}>
           {/* Input */}
-          <Text style={{ fontWeight: "600", marginBottom: 8 }}>
-            Describe Your Image
-          </Text>
+          <Text style={{ fontWeight: "600", marginBottom: 8 }}>Describe Your Image</Text>
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -130,9 +131,7 @@ export default function ImageGenerateModal({ visible, onClose }) {
           />
 
           {/* Style Selection */}
-          <Text style={{ fontWeight: "600", marginBottom: 8 }}>
-            Choose Style
-          </Text>
+          <Text style={{ fontWeight: "600", marginBottom: 8 }}>Choose Style</Text>
           <FlatList
             data={stylesOptions}
             horizontal
@@ -147,8 +146,7 @@ export default function ImageGenerateModal({ visible, onClose }) {
                   borderRadius: 20,
                   borderWidth: 1,
                   borderColor: selectedStyle === item ? "#00AD25" : "#ccc",
-                  backgroundColor:
-                    selectedStyle === item ? "#E6FFED" : "transparent",
+                  backgroundColor: selectedStyle === item ? "#E6FFED" : "transparent",
                   marginRight: 8,
                 }}
               >
@@ -167,11 +165,7 @@ export default function ImageGenerateModal({ visible, onClose }) {
           {/* Publish Toggle */}
           <TouchableOpacity
             onPress={() => setPublish(!publish)}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginVertical: 20,
-            }}
+            style={{ flexDirection: "row", alignItems: "center", marginVertical: 20 }}
           >
             <View
               style={{
@@ -204,9 +198,7 @@ export default function ImageGenerateModal({ visible, onClose }) {
             ) : (
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <ImageIcon size={20} color="white" />
-                <Text style={{ color: "white", marginLeft: 8 }}>
-                  Generate Image
-                </Text>
+                <Text style={{ color: "white", marginLeft: 8 }}>Generate Image</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -221,15 +213,9 @@ export default function ImageGenerateModal({ visible, onClose }) {
               />
 
               {/* Download & Share Buttons */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  marginTop: 15,
-                }}
-              >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 15 }}>
                 <TouchableOpacity
-                  onPress={downloadImage}
+                  onPress={saveImageToGallery}
                   style={{
                     flex: 1,
                     backgroundColor: "#4A90E2",
@@ -239,9 +225,7 @@ export default function ImageGenerateModal({ visible, onClose }) {
                     marginRight: 5,
                   }}
                 >
-                  <Text style={{ color: "white", fontWeight: "600" }}>
-                    Download
-                  </Text>
+                  <Text style={{ color: "white", fontWeight: "600" }}>Download</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={shareImage}
@@ -254,16 +238,12 @@ export default function ImageGenerateModal({ visible, onClose }) {
                     marginLeft: 5,
                   }}
                 >
-                  <Text style={{ color: "white", fontWeight: "600" }}>
-                    Share
-                  </Text>
+                  <Text style={{ color: "white", fontWeight: "600" }}>Share</Text>
                 </TouchableOpacity>
               </View>
             </>
           ) : (
-            <Text style={{ color: "#888", textAlign: "center" }}>
-              No image yet. Generate one!
-            </Text>
+            <Text style={{ color: "#888", textAlign: "center" }}>No image yet. Generate one!</Text>
           )}
         </ScrollView>
       </View>

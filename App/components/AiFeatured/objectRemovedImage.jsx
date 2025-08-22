@@ -13,6 +13,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import * as MediaLibrary from "expo-media-library";
 import axios from "axios";
 import { Scissors, Sparkles } from "lucide-react-native";
 
@@ -80,17 +81,54 @@ export default function RemoveObjectModal({ visible, onClose }) {
     }
   };
 
+  const saveImageToGallery = async () => {
+    if (!processedImage) return;
+
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission denied", "Cannot save image without permission.");
+        return;
+      }
+
+      const fileUri = FileSystem.documentDirectory + "object_removed.png";
+
+      if (processedImage.startsWith("data:image")) {
+        // Clean base64 string to remove whitespace
+        const base64Data = processedImage.split("base64,")[1].replace(/\s/g, '');
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } else {
+        // Handle remote URL
+        await FileSystem.downloadAsync(processedImage, fileUri);
+      }
+
+      const finalUri = fileUri.startsWith("file://") ? fileUri : "file://" + fileUri;
+      const asset = await MediaLibrary.createAssetAsync(finalUri);
+      await MediaLibrary.createAlbumAsync("AI Images", asset, false);
+
+      Alert.alert("Download Complete", "Image saved to your gallery!");
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Download Failed", "Could not save the image.");
+    }
+  };
+
   const shareImage = async () => {
     if (!processedImage) return;
 
     try {
-      // convert base64 to file URI
       const fileUri = FileSystem.documentDirectory + "object_removed.png";
-      await FileSystem.writeAsStringAsync(
-        fileUri,
-        processedImage.replace(/^data:image\/\w+;base64,/, ""),
-        { encoding: FileSystem.EncodingType.Base64 }
-      );
+
+      if (processedImage.startsWith("data:image")) {
+        const base64Data = processedImage.split("base64,")[1].replace(/\s/g, '');
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } else {
+        await FileSystem.downloadAsync(processedImage, fileUri);
+      }
 
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
@@ -98,10 +136,11 @@ export default function RemoveObjectModal({ visible, onClose }) {
         return;
       }
 
-      await Sharing.shareAsync(fileUri);
+      const finalUri = fileUri.startsWith("file://") ? fileUri : "file://" + fileUri;
+      await Sharing.shareAsync(finalUri, { mimeType: "image/png" });
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "Failed to share image");
+      Alert.alert("Share Failed", "Could not share the image.");
     }
   };
 
@@ -147,19 +186,13 @@ export default function RemoveObjectModal({ visible, onClose }) {
             value={objectName}
             onChangeText={setObjectName}
             placeholder="e.g., watch"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 10,
-              padding: 10,
-              marginBottom: 20,
-            }}
+            style={{ borderWidth: 1, borderColor: "#ccc", borderRadius: 10, padding: 10, marginBottom: 20 }}
           />
 
           {/* Remove Object Button */}
           <TouchableOpacity
             onPress={removeObject}
-            disabled={loading || !image}
+            disabled={loading || !image || !objectName.trim()}
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -168,7 +201,7 @@ export default function RemoveObjectModal({ visible, onClose }) {
               padding: 15,
               borderRadius: 12,
               marginBottom: 20,
-              opacity: loading || !image ? 0.6 : 1,
+              opacity: loading || !image || !objectName.trim() ? 0.6 : 1,
             }}
           >
             {loading ? (
@@ -188,46 +221,31 @@ export default function RemoveObjectModal({ visible, onClose }) {
             <>
               <Image
                 source={{ uri: processedImage }}
-                style={{
-                  width: "100%",
-                  height: 220,
-                  borderRadius: 12,
-                  marginBottom: 15,
-                  borderWidth: 1,
-                  borderColor: "#E5E7EB",
-                }}
+                style={{ width: "100%", height: 220, borderRadius: 12, marginBottom: 15, borderWidth: 1, borderColor: "#E5E7EB" }}
                 resizeMode="cover"
               />
-              <TouchableOpacity
-                onPress={shareImage}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "#F59E0B",
-                  padding: 15,
-                  borderRadius: 12,
-                  marginBottom: 20,
-                }}
-              >
-                <Scissors size={20} color="white" />
-                <Text style={{ color: "white", fontWeight: "600", fontSize: 16, marginLeft: 8 }}>
-                  Share Image
-                </Text>
-              </TouchableOpacity>
+
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
+                <TouchableOpacity
+                  onPress={saveImageToGallery}
+                  style={{ flex: 1, backgroundColor: "#4A90E2", padding: 12, borderRadius: 10, alignItems: "center", marginRight: 5 }}
+                >
+                  <Text style={{ color: "white", fontWeight: "600" }}>Download</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={shareImage}
+                  style={{ flex: 1, backgroundColor: "#F59E0B", padding: 12, borderRadius: 10, alignItems: "center", marginLeft: 5 }}
+                >
+                  <Text style={{ color: "white", fontWeight: "600" }}>Share</Text>
+                </TouchableOpacity>
+              </View>
             </>
           )}
 
           {/* Close Button */}
           <TouchableOpacity
             onPress={onClose}
-            style={{
-              backgroundColor: "#EF4444",
-              padding: 15,
-              borderRadius: 12,
-              alignItems: "center",
-              marginBottom: 40,
-            }}
+            style={{ backgroundColor: "#EF4444", padding: 15, borderRadius: 12, alignItems: "center", marginBottom: 40 }}
           >
             <Text style={{ color: "white", fontWeight: "600", fontSize: 16 }}>Close</Text>
           </TouchableOpacity>

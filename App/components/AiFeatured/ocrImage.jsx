@@ -15,7 +15,7 @@ import * as Clipboard from "expo-clipboard";
 import axios from "axios";
 import { Sparkles, Image as ImageIcon, Copy } from "lucide-react-native";
 
-const API_KEY = "wx08frrxe86v2lo7k";
+const API_KEY = "wx95jubo9aszdd6nf";
 const BASE_URL = "https://techhk.aoscdn.com/";
 
 export default function OCRModal({ visible, onClose }) {
@@ -26,7 +26,10 @@ export default function OCRModal({ visible, onClose }) {
   const pickImage = async () => {
     const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!granted) {
-      Alert.alert("Permission required", "Permission to access gallery is required!");
+      Alert.alert(
+        "Permission required",
+        "Permission to access gallery is required!"
+      );
       return;
     }
 
@@ -58,9 +61,16 @@ export default function OCRModal({ visible, onClose }) {
       });
       formData.append("format", "txt");
 
-      const { data } = await axios.post(`${BASE_URL}/api/tasks/document/ocr`, formData, {
-        headers: { "Content-Type": "multipart/form-data", "X-API-KEY": API_KEY },
-      });
+      const { data } = await axios.post(
+        `${BASE_URL}/api/tasks/document/ocr`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "X-API-KEY": API_KEY,
+          },
+        }
+      );
 
       const taskId = data?.data?.task_id;
       if (!taskId) throw new Error("Failed to create OCR task");
@@ -83,9 +93,12 @@ export default function OCRModal({ visible, onClose }) {
 
   const pollOCRResult = async (taskId, retries = 0) => {
     const MAX_RETRIES = 60;
-    const { data } = await axios.get(`${BASE_URL}/api/tasks/document/ocr/${taskId}`, {
-      headers: { "X-API-KEY": API_KEY },
-    });
+    const { data } = await axios.get(
+      `${BASE_URL}/api/tasks/document/ocr/${taskId}`,
+      {
+        headers: { "X-API-KEY": API_KEY },
+      }
+    );
 
     if (data?.data?.state !== 1) {
       if (retries >= MAX_RETRIES) throw new Error("OCR processing timeout");
@@ -109,11 +122,22 @@ export default function OCRModal({ visible, onClose }) {
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
-        <View style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
+        <View
+          style={{ flexDirection: "row", alignItems: "center", padding: 20 }}
+        >
           <Sparkles size={26} color="#00AD25" />
-          <Text style={{ fontSize: 22, fontWeight: "bold", marginLeft: 10 }}>OCR Scanner</Text>
-          <Pressable onPress={onClose} style={{ marginLeft: "auto", padding: 8 }}>
-            <Text style={{ fontSize: 18, fontWeight: "bold", color: "#FF3B30" }}>✕</Text>
+          <Text style={{ fontSize: 22, fontWeight: "bold", marginLeft: 10 }}>
+            OCR Scanner
+          </Text>
+          <Pressable
+            onPress={onClose}
+            style={{ marginLeft: "auto", padding: 8 }}
+          >
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", color: "#FF3B30" }}
+            >
+              ✕
+            </Text>
           </Pressable>
         </View>
 
@@ -131,7 +155,14 @@ export default function OCRModal({ visible, onClose }) {
             }}
           >
             <ImageIcon size={20} color="white" />
-            <Text style={{ color: "white", fontWeight: "600", fontSize: 16, marginLeft: 8 }}>
+            <Text
+              style={{
+                color: "white",
+                fontWeight: "600",
+                fontSize: 16,
+                marginLeft: 8,
+              }}
+            >
               Pick Image
             </Text>
           </TouchableOpacity>
@@ -170,7 +201,14 @@ export default function OCRModal({ visible, onClose }) {
             ) : (
               <>
                 <Sparkles size={20} color="white" />
-                <Text style={{ color: "white", fontWeight: "600", fontSize: 16, marginLeft: 8 }}>
+                <Text
+                  style={{
+                    color: "white",
+                    fontWeight: "600",
+                    fontSize: 16,
+                    marginLeft: 8,
+                  }}
+                >
                   Extract Text
                 </Text>
               </>
@@ -178,8 +216,24 @@ export default function OCRModal({ visible, onClose }) {
           </TouchableOpacity>
 
           {ocrText ? (
-            <View style={{ padding: 10, backgroundColor: "#F3F4F6", borderRadius: 12 }}>
-              <Text style={{ marginBottom: 10 }}>{ocrText}</Text>
+            <View
+              style={{
+                maxHeight: 300, // fixed height
+                borderWidth: 1,
+                borderColor: "#D1D5DB",
+                borderRadius: 12,
+                backgroundColor: "#F3F4F6",
+                padding: 10,
+                marginBottom: 20,
+              }}
+            >
+              <ScrollView
+                nestedScrollEnabled={true}
+                style={{ marginBottom: 10 }}
+              >
+                <Text>{ocrText}</Text>
+              </ScrollView>
+
               <TouchableOpacity
                 onPress={copyText}
                 style={{
@@ -192,11 +246,21 @@ export default function OCRModal({ visible, onClose }) {
                 }}
               >
                 <Copy size={18} color="white" />
-                <Text style={{ color: "white", fontWeight: "600", marginLeft: 6 }}>Copy Text</Text>
+                <Text
+                  style={{ color: "white", fontWeight: "600", marginLeft: 6 }}
+                >
+                  Copy Text
+                </Text>
               </TouchableOpacity>
             </View>
           ) : (
-            !loading && <Text style={{ textAlign: "center", color: "#888", marginTop: 20 }}>No OCR text yet</Text>
+            !loading && (
+              <Text
+                style={{ textAlign: "center", color: "#888", marginTop: 20 }}
+              >
+                No OCR text yet
+              </Text>
+            )
           )}
         </ScrollView>
       </View>

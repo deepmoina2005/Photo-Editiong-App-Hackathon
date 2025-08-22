@@ -1,21 +1,43 @@
-import { SafeAreaView, ScrollView } from "react-native";
+import { SafeAreaView, View, StyleSheet } from "react-native";
 import Header from "../../components/Home/Header";
 import Banner from "../../components/Home/Banner";
 import AiFeaturedModel from "../../components/Home/AiFeaturedModel";
 
 export default function HomeTab() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
-        {/* Header */}
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.headerContainer}>
         <Header />
+      </View>
 
-        {/* Banner */}
+      {/* Banner */}
+      <View style={styles.bannerContainer}>
         <Banner />
+      </View>
 
-        {/* Featured List */}
+      {/* AI Featured List */}
+      <View style={styles.featuredContainer}>
         <AiFeaturedModel />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingHorizontal: 15, // horizontal spacing
+    paddingTop: 10,        // top spacing
+  },
+  headerContainer: {
+    marginBottom: 15,
+  },
+  bannerContainer: {
+    marginBottom: 20,
+  },
+  featuredContainer: {
+    flex: 1,
+  },
+});

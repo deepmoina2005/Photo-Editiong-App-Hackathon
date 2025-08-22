@@ -17,18 +17,16 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="home" size={22} color={color} />
-          ),
+          tabBarLabel: "Home", // <-- use tabBarLabel instead of title
+          tabBarIcon: ({ color }) => <FontAwesome5 name="home" size={22} color={color} />,
         }}
       />
 
-      {/* Big Center Edit Button */}
+      {/* Photo Edit Button */}
       <Tabs.Screen
         name="photoedit"
         options={{
-          title: "",
+          tabBarLabel: "", // safe
           tabBarIcon: () => (
             <View
               style={{
@@ -38,7 +36,7 @@ export default function TabLayout() {
                 backgroundColor: Colors.PRIMARY,
                 justifyContent: "center",
                 alignItems: "center",
-                marginBottom: 20, // lifts above bar
+                marginBottom: 20,
               }}
             >
               <AntDesign name="plus" size={28} color="white" />
@@ -51,10 +49,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="collection"
         options={{
-          title: "Collection",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="folder-open" size={22} color={color} />
-          ),
+          tabBarLabel: "Collection",
+          tabBarIcon: ({ color }) => <FontAwesome5 name="folder-open" size={22} color={color} />,
         }}
       />
     </Tabs>

@@ -14,6 +14,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import * as MediaLibrary from "expo-media-library";
 import { Sparkles, Image as ImageIcon } from "lucide-react-native";
 import { enhancedImageAPI } from "../../utils/enhancedImageApi"; // your TechHK API helper
 
@@ -73,21 +74,66 @@ export default function EnhancedImage({ visible, onClose }) {
     }
   };
 
+  // Save enhanced image to gallery
+  const saveImageToGallery = async () => {
+    if (!enhancedImage) return;
+
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission denied", "Cannot save image without permission.");
+        return;
+      }
+
+      const fileUri = FileSystem.documentDirectory + "enhanced_image.png";
+
+      if (enhancedImage.startsWith("data:image")) {
+        const base64Data = enhancedImage.split("base64,")[1].replace(/\s/g, '');
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } else {
+        await FileSystem.downloadAsync(enhancedImage, fileUri);
+      }
+
+      const finalUri = fileUri.startsWith("file://") ? fileUri : "file://" + fileUri;
+      const asset = await MediaLibrary.createAssetAsync(finalUri);
+      await MediaLibrary.createAlbumAsync("Enhanced Images", asset, false);
+
+      Alert.alert("Download Complete", "Image saved to your gallery!");
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Download Failed", "Could not save the image.");
+    }
+  };
+
   // Share enhanced image
   const shareImage = async () => {
     if (!enhancedImage) return;
 
     try {
-      const fileUri = FileSystem.documentDirectory + "enhanced_image.jpg";
-      await FileSystem.writeAsStringAsync(
-        fileUri,
-        enhancedImage.replace(/^data:image\/\w+;base64,/, ""),
-        { encoding: FileSystem.EncodingType.Base64 }
-      );
-      await Sharing.shareAsync(fileUri);
+      const fileUri = FileSystem.documentDirectory + "enhanced_image.png";
+
+      if (enhancedImage.startsWith("data:image")) {
+        const base64Data = enhancedImage.split("base64,")[1].replace(/\s/g, '');
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } else {
+        await FileSystem.downloadAsync(enhancedImage, fileUri);
+      }
+
+      const finalUri = fileUri.startsWith("file://") ? fileUri : "file://" + fileUri;
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert("Error", "Sharing is not available on this device");
+        return;
+      }
+
+      await Sharing.shareAsync(finalUri, { mimeType: "image/png" });
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "Failed to share image");
+      Alert.alert("Share Failed", "Could not share the image.");
     }
   };
 
@@ -97,9 +143,7 @@ export default function EnhancedImage({ visible, onClose }) {
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
           <Sparkles size={26} color="#FFD700" />
-          <Text style={{ fontSize: 22, fontWeight: "bold", marginLeft: 10 }}>
-            Photo Enhancer
-          </Text>
+          <Text style={{ fontSize: 22, fontWeight: "bold", marginLeft: 10 }}>Photo Enhancer</Text>
           <Pressable onPress={onClose} style={{ marginLeft: "auto", padding: 8 }}>
             <Text style={{ fontSize: 18, fontWeight: "bold", color: "#FF3B30" }}>✕</Text>
           </Pressable>
@@ -120,9 +164,7 @@ export default function EnhancedImage({ visible, onClose }) {
             }}
           >
             <ImageIcon size={20} color="white" />
-            <Text style={{ color: "white", fontWeight: "600", fontSize: 16, marginLeft: 8 }}>
-              Pick Image
-            </Text>
+            <Text style={{ color: "white", fontWeight: "600", fontSize: 16, marginLeft: 8 }}>Pick Image</Text>
           </TouchableOpacity>
 
           {/* Original Image */}
@@ -170,24 +212,21 @@ export default function EnhancedImage({ visible, onClose }) {
                 resizeMode="cover"
               />
 
-              {/* Share Button */}
-              <TouchableOpacity
-                onPress={shareImage}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "#F59E0B",
-                  padding: 15,
-                  borderRadius: 12,
-                  marginBottom: 20,
-                }}
-              >
-                <ImageIcon size={20} color="white" />
-                <Text style={{ color: "white", fontWeight: "600", fontSize: 16, marginLeft: 8 }}>
-                  Share Image
-                </Text>
-              </TouchableOpacity>
+              {/* Download & Share Buttons */}
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
+                <TouchableOpacity
+                  onPress={saveImageToGallery}
+                  style={{ flex: 1, backgroundColor: "#4A90E2", padding: 12, borderRadius: 10, alignItems: "center", marginRight: 5 }}
+                >
+                  <Text style={{ color: "white", fontWeight: "600" }}>Download</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={shareImage}
+                  style={{ flex: 1, backgroundColor: "#F59E0B", padding: 12, borderRadius: 10, alignItems: "center", marginLeft: 5 }}
+                >
+                  <Text style={{ color: "white", fontWeight: "600" }}>Share</Text>
+                </TouchableOpacity>
+              </View>
             </>
           )}
 

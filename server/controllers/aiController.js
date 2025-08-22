@@ -1,20 +1,23 @@
 import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
 import FormData from "form-data";
+import fs from "fs";
 import Creation from "../models/Creation.js"; // MongoDB model
+
+const BASE_URL = "https://techhk.aoscdn.com/";
+const PICWISH_API_KEY = process.env.ENHANCE_API_KEY;
+const MAXIMUM_RETRIES = 20;
+
+// =================== EXISTING FUNCTIONS ===================
 
 export const generateImage = async (req, res) => {
   try {
     const { prompt, publish } = req.body;
-
-    if (!prompt) {
-      return res.status(400).json({ success: false, message: "Prompt is required" });
-    }
+    if (!prompt) return res.status(400).json({ success: false, message: "Prompt is required" });
 
     const formData = new FormData();
     formData.append("prompt", prompt);
 
-    // Call Clipdrop API
     const { data } = await axios.post(
       "https://clipdrop-api.co/text-to-image/v1",
       formData,
@@ -28,11 +31,8 @@ export const generateImage = async (req, res) => {
     );
 
     const base64Image = `data:image/png;base64,${Buffer.from(data, "binary").toString("base64")}`;
-
-    // Upload to Cloudinary
     const { secure_url } = await cloudinary.uploader.upload(base64Image);
 
-    // Save in MongoDB
     const creation = new Creation({
       prompt,
       content: secure_url,
@@ -51,9 +51,7 @@ export const generateImage = async (req, res) => {
 export const removeImageBackground = async (req, res) => {
   try {
     const image = req.file;
-    if (!image) {
-      return res.status(400).json({ success: false, message: "No image uploaded" });
-    }
+    if (!image) return res.status(400).json({ success: false, message: "No image uploaded" });
 
     const { secure_url } = await cloudinary.uploader.upload(image.path, {
       transformation: [{ effect: "background_removal" }],
@@ -78,16 +76,10 @@ export const removeImageObject = async (req, res) => {
   try {
     const { object } = req.body;
     const image = req.file;
-
-    if (!object) {
-      return res.status(400).json({ success: false, message: "Missing object to remove" });
-    }
-    if (!image) {
-      return res.status(400).json({ success: false, message: "No image uploaded" });
-    }
+    if (!object) return res.status(400).json({ success: false, message: "Missing object to remove" });
+    if (!image) return res.status(400).json({ success: false, message: "No image uploaded" });
 
     const { public_id } = await cloudinary.uploader.upload(image.path);
-
     const imageUrl = cloudinary.url(public_id, {
       transformation: [{ effect: `gen_remove:${object}` }],
       resource_type: "image",
@@ -108,56 +100,109 @@ export const removeImageObject = async (req, res) => {
   }
 };
 
-export const upscaleImage = async (req, res) => {
+// =================== NEW COLORIZE FUNCTION ===================
+
+export const colorizeImage = async (req, res) => {
   try {
-    const image = req.file; // multer file
-    const { target_width, target_height } = req.body;
+    const image = req.file;
+    if (!image) return res.status(400).json({ success: false, message: "No image uploaded" });
 
-    if (!image) {
-      return res.status(400).json({ success: false, message: "No image uploaded" });
-    }
-
-    if (!target_width || !target_height) {
-      return res.status(400).json({ success: false, message: "Target width and height are required" });
-    }
-
-    // Prepare FormData for Clipdrop
     const formData = new FormData();
-    formData.append("image_file", image.path); // file path
-    formData.append("target_width", target_width);
-    formData.append("target_height", target_height);
+    formData.append("sync", "0");
+    formData.append("return_type", 1);
+    formData.append("image_file", fs.createReadStream(image.path));
 
-    // Call Clipdrop upscale API
-    const { data } = await axios.post(
-      "https://clipdrop-api.co/image-upscaling/v1/upscale",
-      formData,
-      {
-        headers: {
-          ...formData.getHeaders(),
-          "x-api-key": process.env.CLIPDROP_API_KEY,
-        },
-        responseType: "arraybuffer", // receive binary
-      }
-    );
+    const { data } = await axios.post(`${BASE_URL}api/tasks/visual/colorization`, formData, {
+      headers: { ...formData.getHeaders(), "X-API-KEY": PICWISH_API_KEY },
+    });
 
-    // Convert response to Base64
-    const base64Image = `data:image/png;base64,${Buffer.from(data, "binary").toString("base64")}`;
+    const taskId = data?.data?.task_id;
+    if (!taskId) throw new Error("Failed to create colorization task");
 
-    // Upload to Cloudinary
-    const { secure_url } = await cloudinary.uploader.upload(base64Image);
+    const result = await pollColorizationResult(taskId);
+    if (!result?.image) throw new Error("Colorized image not returned");
 
-    // Save in MongoDB
+    fs.unlinkSync(image.path); // remove temp file
+    res.json({ success: true, image: result.image });
+  } catch (err) {
+    console.error("Colorize error:", err);
+    res.status(500).json({ success: false, message: "Colorize failed" });
+  }
+};
+
+const pollColorizationResult = async (taskId, retries = 0) => {
+  const MAX_RETRIES = 30;
+  const { data } = await axios.get(`${BASE_URL}api/tasks/visual/colorization/${taskId}`, {
+    headers: { "X-API-KEY": COLORIZE_API_KEY },
+  });
+
+  if (data?.data?.state !== 1) {
+    if (retries >= MAX_RETRIES) throw new Error("Colorization timeout");
+    await new Promise((res) => setTimeout(res, 1000));
+    return pollColorizationResult(taskId, retries + 1);
+  }
+  return data.data;
+};
+
+// =================== NEW ENHANCE FUNCTION ===================
+
+export const enhanceImage = async (req, res) => {
+  try {
+    const image = req.file;
+    if (!image) return res.status(400).json({ success: false, message: "No image uploaded" });
+
+    const taskId = await uploadEnhanceImage(image.path);
+    const enhancedImageData = await pollForEnhancedImage(taskId);
+
+    if (!enhancedImageData?.image) throw new Error("Enhanced image not returned");
+
+    fs.unlinkSync(image.path);
+
     const creation = new Creation({
-      prompt: `Upscaled image to ${target_width}x${target_height}`,
-      content: secure_url,
+      prompt: "Enhanced image",
+      content: enhancedImageData.image,
       type: "image",
       publish: false,
     });
     await creation.save();
 
-    res.json({ success: true, content: secure_url });
+    res.json({ success: true, content: enhancedImageData.image });
   } catch (error) {
-    console.error("Image upscaling error:", error.message || error);
-    res.status(500).json({ success: false, message: "Image upscaling failed." });
+    console.error("Image enhancement error:", error.message || error);
+    res.status(500).json({ success: false, message: "Image enhancement failed." });
   }
+};
+
+const uploadEnhanceImage = async (filePath) => {
+  const formData = new FormData();
+  formData.append("image_file", fs.createReadStream(filePath));
+
+  const { data } = await axios.post(`${BASE_URL}api/tasks/visual/scale`, formData, {
+    headers: { ...formData.getHeaders(), "X-API-KEY": PICWISH_API_KEY },
+  });
+
+  if (!data?.data?.task_id) throw new Error("Failed to upload image! Task ID not found.");
+  return data.data.task_id;
+};
+
+const pollForEnhancedImage = async (taskId, retries = 0) => {
+  const result = await fetchEnhancedImage(taskId);
+
+  if (result.state !== 1) {
+    console.log(`Processing...(${retries}/${MAXIMUM_RETRIES})`);
+    if (retries >= MAXIMUM_RETRIES) throw new Error("Max retries reached. Please try again later.");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    return pollForEnhancedImage(taskId, retries + 1);
+  }
+
+  return result;
+};
+
+const fetchEnhancedImage = async (taskId) => {
+  const { data } = await axios.get(`${BASE_URL}api/tasks/visual/scale/${taskId}`, {
+    headers: { "X-API-KEY": PICWISH_API_KEY },
+  });
+
+  if (!data?.data) throw new Error("Failed to fetch enhanced image! Image not found.");
+  return data.data;
 };

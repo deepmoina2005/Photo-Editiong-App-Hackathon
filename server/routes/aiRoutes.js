@@ -3,6 +3,8 @@ import {
   generateImage,
   removeImageBackground,
   removeImageObject,
+  colorizeImage,
+  enhanceImage,
 } from "../controllers/aiController.js";
 import { upload } from "../configs/multer.js";
 
@@ -23,6 +25,20 @@ aiRouter.post(
   "/remove-image-object",
   upload.single("image"),
   removeImageObject
+);
+
+// ✅ Image colorization (with file upload)
+aiRouter.post(
+  "/colorize-image",
+  upload.single("image"),
+  colorizeImage
+);
+
+// ✅ Image enhancement / upscaling (with file upload)
+aiRouter.post(
+  "/enhance-image",
+  upload.single("image"),
+  enhanceImage
 );
 
 export default aiRouter;

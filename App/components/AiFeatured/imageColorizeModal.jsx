@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,11 +11,13 @@ import {
   Pressable,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import * as MediaLibrary from "expo-media-library";
 import axios from "axios";
-import { Sparkles, Image as ImageIcon, Copy } from "lucide-react-native";
-import * as Clipboard from "expo-clipboard";
+import { Sparkles, Image as ImageIcon } from "lucide-react-native";
 
-const API_KEY = "wx08frrxe86v2lo7k";
+const API_KEY = "wx95jubo9aszdd6nf";
 const BASE_URL = "https://techhk.aoscdn.com/";
 
 export default function ColorizeModal({ visible, onClose }) {
@@ -95,15 +97,53 @@ export default function ColorizeModal({ visible, onClose }) {
     return data.data;
   };
 
-  const copyURL = async () => {
+  const saveImageToGallery = async () => {
     if (!colorizedImage) return;
-    await Clipboard.setStringAsync(colorizedImage);
-    Alert.alert("Copied", "Colorized image URL copied to clipboard");
+
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission denied", "Cannot save image without permission.");
+        return;
+      }
+
+      const fileUri = FileSystem.documentDirectory + "colorized_image.png";
+      await FileSystem.downloadAsync(colorizedImage, fileUri);
+
+      const asset = await MediaLibrary.createAssetAsync(fileUri);
+      await MediaLibrary.createAlbumAsync("AI Images", asset, false);
+
+      Alert.alert("Download Complete", "Image saved to your gallery!");
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Download Failed", "Could not save the image.");
+    }
+  };
+
+  const shareImage = async () => {
+    if (!colorizedImage) return;
+
+    try {
+      const fileUri = FileSystem.documentDirectory + "colorized_image.png";
+      await FileSystem.downloadAsync(colorizedImage, fileUri);
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert("Error", "Sharing is not available on this device");
+        return;
+      }
+
+      await Sharing.shareAsync(fileUri, { mimeType: "image/png" });
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Share Failed", "Could not share the image.");
+    }
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
+        {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", padding: 20 }}>
           <Sparkles size={26} color="#FF4500" />
           <Text style={{ fontSize: 22, fontWeight: "bold", marginLeft: 10 }}>Photo Colorizer</Text>
@@ -112,7 +152,9 @@ export default function ColorizeModal({ visible, onClose }) {
           </Pressable>
         </View>
 
+        {/* Body */}
         <ScrollView style={{ flex: 1, padding: 20 }}>
+          {/* Pick Image */}
           <TouchableOpacity
             onPress={pickImage}
             style={{
@@ -131,6 +173,7 @@ export default function ColorizeModal({ visible, onClose }) {
             </Text>
           </TouchableOpacity>
 
+          {/* Original Image Preview */}
           {image && (
             <Image
               source={{ uri: image }}
@@ -139,6 +182,7 @@ export default function ColorizeModal({ visible, onClose }) {
             />
           )}
 
+          {/* Colorize Button */}
           <TouchableOpacity
             onPress={colorizeImage}
             disabled={loading || !image}
@@ -165,6 +209,7 @@ export default function ColorizeModal({ visible, onClose }) {
             )}
           </TouchableOpacity>
 
+          {/* Colorized Image Preview + Actions */}
           {colorizedImage && (
             <>
               <Image
@@ -173,23 +218,35 @@ export default function ColorizeModal({ visible, onClose }) {
                 resizeMode="cover"
               />
 
-              <TouchableOpacity
-                onPress={copyURL}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "#F59E0B",
-                  padding: 15,
-                  borderRadius: 12,
-                  marginBottom: 20,
-                }}
-              >
-                <Copy size={20} color="white" />
-                <Text style={{ color: "white", fontWeight: "600", fontSize: 16, marginLeft: 8 }}>
-                  Copy Image URL
-                </Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
+                <TouchableOpacity
+                  onPress={saveImageToGallery}
+                  style={{
+                    flex: 1,
+                    backgroundColor: "#4A90E2",
+                    padding: 12,
+                    borderRadius: 10,
+                    alignItems: "center",
+                    marginRight: 5,
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "600" }}>Download</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={shareImage}
+                  style={{
+                    flex: 1,
+                    backgroundColor: "#F59E0B",
+                    padding: 12,
+                    borderRadius: 10,
+                    alignItems: "center",
+                    marginLeft: 5,
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "600" }}>Share</Text>
+                </TouchableOpacity>
+              </View>
             </>
           )}
 

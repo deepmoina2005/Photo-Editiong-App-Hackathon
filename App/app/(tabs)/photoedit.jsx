@@ -34,25 +34,30 @@ const PhotoEditor = () => {
 
   const imageRef = useRef(null);
 
-  // ✅ Pick image with built-in crop
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted" && status !== "limited") {
-      Alert.alert("Permission required", "Please allow gallery access.");
-      return;
-    }
+// ✅ Pick image with multiple crop options
+const pickImage = async (cropType = "free") => {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== "granted" && status !== "limited") {
+    Alert.alert("Permission required", "Please allow gallery access.");
+    return;
+  }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, // enables crop UI
-      aspect: [1, 1], // square crop
-      quality: 1,
-    });
+  let aspect = undefined; // default: free crop
+  if (cropType === "square") aspect = [1, 1];
+  if (cropType === "portrait") aspect = [3, 4];
+  if (cropType === "landscape") aspect = [4, 3];
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
-  };
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect, // undefined = free crop
+    quality: 1,
+  });
+
+  if (!result.canceled) {
+    setImage(result.assets[0].uri);
+  }
+};
 
   // ✅ Manual crop example
   const handleCrop = async () => {

@@ -1,22 +1,38 @@
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 const TabsNavigation = ({ activeTab, onTabChange }) => {
+  const tabs = [
+    { key: "adjust", label: "Adjust", icon: "options-outline" },
+    { key: "filters", label: "Filters", icon: "color-filter-outline" },
+    { key: "crop", label: "Crop", icon: "crop-outline" },
+    { key: "effects", label: "Effects", icon: "sparkles-outline" },
+    { key: "text", label: "Text", icon: "text-outline" },
+  ];
+
   return (
     <View style={styles.tabsContainer}>
-      <TouchableOpacity 
-        style={[styles.tab, activeTab === "adjust" && styles.activeTab]} 
-        onPress={() => onTabChange("adjust")}
-      >
-        <Ionicons 
-          name="options-outline" 
-          size={20} 
-          color={activeTab === "adjust" ? "#FF3366" : "#888"} 
-        />
-        <Text style={[styles.tabText, activeTab === "adjust" && styles.activeTabText]}>
-          Adjust
-        </Text>
-      </TouchableOpacity>
+      {tabs.map((tab) => (
+        <TouchableOpacity
+          key={tab.key}
+          style={[styles.tab, activeTab === tab.key && styles.activeTab]}
+          onPress={() => onTabChange(tab.key)}
+        >
+          <Ionicons
+            name={tab.icon}
+            size={20}
+            color={activeTab === tab.key ? "#FF3366" : "#888"}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === tab.key && styles.activeTabText,
+            ]}
+          >
+            {tab.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 };
@@ -33,7 +49,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    paddingVertical: 14,
     gap: 6,
   },
   activeTab: {
@@ -42,7 +58,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     color: "#888",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
   activeTabText: {

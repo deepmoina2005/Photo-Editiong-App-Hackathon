@@ -144,14 +144,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sliderLabel: { 
-    color: "white", 
+    color: "black",   // 🔥 changed to black
     fontSize: 14,
     fontWeight: "500",
     flex: 1,
     marginLeft: 8,
   },
   valueText: { 
-    color: "#FF3366", 
+    color: "black",   // 🔥 changed to black
     fontWeight: "600",
     fontSize: 12,
     minWidth: 30,
@@ -162,5 +162,6 @@ const styles = StyleSheet.create({
     height: 30,
   },
 });
+
 
 export default AdjustTab;

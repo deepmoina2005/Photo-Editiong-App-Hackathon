@@ -27,18 +27,4 @@ aiRouter.post(
   removeImageObject
 );
 
-// ✅ Image colorization (with file upload)
-aiRouter.post(
-  "/colorize-image",
-  upload.single("image"),
-  colorizeImage
-);
-
-// ✅ Image enhancement / upscaling (with file upload)
-aiRouter.post(
-  "/enhance-image",
-  upload.single("image"),
-  enhanceImage
-);
-
 export default aiRouter;

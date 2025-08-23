@@ -1,16 +1,20 @@
 import { View, Text, Image, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import Colors from "../../constants/Colors";
 
 export default function Header() {
-  const profileImage = require("../../assets/images/react-logo.png");
+  const profileImage = require("../../assets/images/imagine_ai_logo.png");
 
   return (
-    <View style={styles.headerContainer}>
-      <Text style={styles.title}>Imagin AI</Text>
+    <LinearGradient
+      colors={["#ffffff", "#f0f8ff"]}
+      style={styles.headerContainer}
+    >
+      <Text style={styles.title}>✨ Imagine Ai</Text>
       <View style={styles.profileContainer}>
         <Image source={profileImage} style={styles.profileImage} />
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -19,19 +23,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 3,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderRadius: 10,
   },
   title: {
-    fontSize: 30,
-    color: Colors.PRIMARY,
+    fontSize: 26,
+    color: "#1E90FF",
     fontWeight: "bold",
+    letterSpacing: 1,
   },
   profileContainer: {
-    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 99,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 0,
+    borderColor: Colors.PRIMARY,
+    shadowColor: "#1E90FF",
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 4,
   },
 });

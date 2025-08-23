@@ -192,6 +192,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     padding: 12,
+    paddingTop: 40,
     backgroundColor: "#000",
   },
   controlsContainer: {

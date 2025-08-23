@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 15, // horizontal spacing
-    paddingTop: 10,        // top spacing
+    paddingTop: 35,        // top spacing
   },
   headerContainer: {
     marginBottom: 15,

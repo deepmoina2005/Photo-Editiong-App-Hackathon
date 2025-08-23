@@ -133,6 +133,7 @@ const AdjustTab = ({
 const styles = StyleSheet.create({
   tabContent: {
     padding: 20,
+    height: 250,
   },
   sliderBox: { 
     marginBottom: 24,

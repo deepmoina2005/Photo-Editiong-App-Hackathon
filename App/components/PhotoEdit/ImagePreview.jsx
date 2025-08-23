@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.WHITE,
+    backgroundColor: "black",
     padding: 20,
   },
   selectButtonContainer: {

@@ -47,10 +47,10 @@ export default function TabLayout() {
 
       {/* Collection */}
       <Tabs.Screen
-        name="collection"
+        name="about"
         options={{
-          tabBarLabel: "Collection",
-          tabBarIcon: ({ color }) => <FontAwesome5 name="folder-open" size={22} color={color} />,
+          tabBarLabel: "About us",
+          tabBarIcon: ({ color }) => <FontAwesome5 name="user-alt" size={22} color={color} />,
         }}
       />
     </Tabs>
